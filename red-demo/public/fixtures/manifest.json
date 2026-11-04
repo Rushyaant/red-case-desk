@@ -1,0 +1,55 @@
+[
+  {
+    "case": "clean",
+    "email": "clean.eml",
+    "expected": "clean"
+  },
+  {
+    "case": "clean-qr",
+    "email": "clean-qr.eml",
+    "expected": "clean",
+    "image": "clean-qr.png"
+  },
+  {
+    "case": "omission",
+    "email": "omission.eml",
+    "expected": "lookalike_host"
+  },
+  {
+    "case": "repetition",
+    "email": "repetition.eml",
+    "expected": "lookalike_host"
+  },
+  {
+    "case": "swap",
+    "email": "swap.eml",
+    "expected": "lookalike_host"
+  },
+  {
+    "case": "keyboard",
+    "email": "keyboard.eml",
+    "expected": "lookalike_host"
+  },
+  {
+    "case": "homoglyph-qr",
+    "email": "homoglyph-qr.eml",
+    "expected": "lookalike_host",
+    "image": "homoglyph-qr.png"
+  },
+  {
+    "case": "subdomain",
+    "email": "subdomain.eml",
+    "expected": "misleading_subdomain"
+  },
+  {
+    "case": "userinfo-qr",
+    "email": "userinfo-qr.eml",
+    "expected": "url_userinfo",
+    "image": "userinfo-qr.png"
+  },
+  {
+    "case": "reply-to",
+    "email": "reply-to.eml",
+    "expected": "reply_to_mismatch"
+  }
+]

@@ -1,0 +1,4 @@
+Flask>=3.1,<4
+qrcode[pil]
+Pillow
+idna>=3.10,<4

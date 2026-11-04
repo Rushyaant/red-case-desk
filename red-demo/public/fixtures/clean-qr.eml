@@ -1,0 +1,33 @@
+From: Campus Desk Training <training@campusdesk.test>
+To: Lab Recipient <student@example.test>
+Subject: [SIMULATION] Campus Desk training sample clean-qr
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5971563684860676265=="
+
+--===============5971563684860676265==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Synthetic lab message. Inspect the attachment offline.
+
+--===============5971563684860676265==
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="clean-qr.png"
+MIME-Version: 1.0
+
+iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACh0lEQVR4nO2bwW3cMBBF30QEfKQA
+F5BSuB24ppSUDqRSXIAB6WiAi58DSe3KcewY2VUkYOZASOI7fICYIflJmfhKjN++hIPzzjvvvPPO
+O/8n3mqE8nQNzK3vtKEe52/MJ0nSBBroZCfATpwN6CRJWvP31uP8jfl5yVBAP/qzMfb11czC1nqc
+vw9vp5ghPQdIU83k/6nH+X/jw29f5pANumyjdVnM2+px/j58lDSUx7Np4Gwa4mtZaUnKW+tx/jY8
+14snOpGmN03rS5I07E2/8x9Hqc/XJmWsuaqx74C4NjD3pt/5T6Lkb5KWXO3aiMalKseKeP4eja/5
+Oxpo/C5g7m1JWTGeAObF8tibfuf/ik/K1E1wzDCaGaMFSNN6it6pfuc/5seeZZAfZKeYqU3pPdua
+v7ce52/El+TUUObay9Rbv5VGyo3bm37nP4lafKNUh3HqpIGuLagW0NdXx+XrMM5hValLtOHeUo/z
+t+KrP5mmc4CYA3A20s/HrLF/CSSBJfn8e1C+zquaoDYtdTXEdeH2+nxAvvkbExQb4+Jl6OJPxuzz
+7zH5xZ8Uxhxq7ha746msqXPZM22jx/n78LOZpFcrT6U0z2blpJ92krRf/c6/HyV/6+jNPaSfj9mI
+AHEqHUacPH+Pybf1VYvVSTDUgwf5+cKh+cv9yXo1R5l6fjQHihO9pR7nb8xf7k/+6AHmB2mYA23p
+7PPvQfnr/VGauqv63DxpaJtgr8/H49/erxOAEV+CwYMYn6bSYWnYQo/zd+aL//wcip1Vv13+adi9
+fudX0fI3Cspd2NkQ5GDEVyM9h2zEl8btTb/zn8R79yfb0W+zK4nuPx+UN/+/23nnnXfeeec3538B
+48Kc56E9gg8AAAAASUVORK5CYII=
+
+--===============5971563684860676265==--

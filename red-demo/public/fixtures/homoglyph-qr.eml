@@ -1,0 +1,33 @@
+From: Campus Desk Training <training@campusdesk.test>
+To: Lab Recipient <student@example.test>
+Subject: [SIMULATION] Campus Desk training sample homoglyph-qr
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============8202986995955500936=="
+
+--===============8202986995955500936==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Synthetic lab message. Inspect the attachment offline.
+
+--===============8202986995955500936==
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="homoglyph-qr.png"
+MIME-Version: 1.0
+
+iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACdklEQVR4nO2bS4qkQBRFz2uFHCr0
+AnIpurOidqZLyQU0hMOEkNuDiLCsgvrRWbYBLwai5BlcCN7/pYnvnPnXt3Bw3nnnnXfeeeff4y2f
+FljMmM0MWM3Gpfw2HqjH+QfzgyQpgNlVgi7C3APQSJL0mv9pPc4/mF+yhWpazBgCMNwu0gRkwz5U
+j/M/xA8BbFwu79RNp9fv/Ie8Wd9Iz/1qzNd7ibr/T4/z/8YXx9sJWECwGkPoMbr8296Uz6bf+S/x
+s5mZ9S+uuRHD7SJgTenzsXqcfxCP3p4A0EU0ldR5d6az6Xf+K7yNS5sezNdIyprHLsdfG1ndfuvk
+2RW3g2KqhKGT8huNNJVPt9/a+O1+m1ePTpJCk911Kof9fuvlhwDQ3ZMbTk2O+RohX3f22afV7/x7
+J9nvEBrlhCqAFJrimpN/jm6/dfPd3Ri0NTTShUYsp1aN959r5vXcN2K2lpRazT1pvqCpe7nk4/Q4
+/yi++GfFdJfFdLXzyin+ev1bOZ/qX5Y8NQKyTedy+Gg9zj+M13NPGQIrUjqVLQxhNXgZJ51Tv/Mf
+8/Z021Y3+tUYbm1ud6ROtO4ef+vkS1xNb5HcfwZSJKbz+Fsz/7r+BZLBhtKVBDbH7fdbK7/LlTdf
+bCOr5fx58f26Svk03y/RtYmarVEaIsEKLL8j8zWWPYCz6Xf+S/y2Pwnd3ewpgJld8ial96+q54sH
+thHQxGp5SdbMcpF0qB7nf4bXtLR5yW5atiJp8f3YSvn2zbcNoc9vAMz9H5ivKiH6bPqd/+SU/nMZ
+6E/AvlJSLIWx10cV8vv9nG1/Yzf1xee/VfPm/+923nnnnXfe+cP5vwtHs/6NYpCMAAAAAElFTkSu
+QmCC
+
+--===============8202986995955500936==--
