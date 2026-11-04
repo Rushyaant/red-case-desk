@@ -1,5 +1,3 @@
-import { generateTrainingVariants, isTrainingDomain } from './trainingVariants.js'
-
 export const trainingMode = import.meta.env.MODE === 'training'
 
 async function read(response) {
@@ -22,11 +20,8 @@ async function post(path, body) {
 
 export async function generateVariants(options) {
   if (!trainingMode) return post('/api/red/variants', options)
-  const input = options.domain.trim()
-  const domain = input.toLowerCase()
-  if (!/^[a-zA-Z0-9.-]+$/.test(input) || !isTrainingDomain(domain) || domain.startsWith('xn--')) {
-    throw new Error('Enter a fictional domain ending in .test, such as librarydesk.test. Use ASCII letters, numbers, or hyphens.')
-  }
+  const { generateTrainingVariants, websiteDomain } = await import('./trainingVariants.js')
+  const domain = websiteDomain(options.domain)
   if (domain !== 'campusdesk.test') return generateTrainingVariants(domain, options.unicode)
   const { variants } = await trainingData()
   return { ...variants, variants: options.unicode ? variants.variants : variants.variants.filter(row => !row.unicode_domain) }
@@ -34,9 +29,15 @@ export async function generateVariants(options) {
 
 export async function checkEvidence(domains) {
   if (!trainingMode) return post('/api/red/evidence', { domains })
-  if (!domains.every(isTrainingDomain)) throw new Error('Select fictional .test candidates from Lookalikes.')
-  const { reservedEvidence } = await trainingData()
-  return { results: domains.map(domain => ({ ...reservedEvidence, domain })) }
+  const { isDomain } = await import('./trainingVariants.js')
+  if (!domains.every(isDomain)) throw new Error('Select valid domain candidates from Lookalikes.')
+  const reservedEvidence = domains.some(domain => domain.endsWith('.test'))
+    ? (await trainingData()).reservedEvidence
+    : null
+  const skipped = { status: 'skipped', reason: 'Live lookups are available in the local lab.' }
+  return { results: domains.map(domain => domain.endsWith('.test')
+    ? { ...reservedEvidence, domain }
+    : { domain, ...skipped, evidence: { dns_a: skipped, dns_aaaa: skipped, ct: skipped } }) }
 }
 
 export async function trainingScan(sample) {

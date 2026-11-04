@@ -137,7 +137,9 @@ export default function CaseReport({ variants, observations, scan, selected }) {
           <h3 id="report-summary-title">Session summary</h3>
           <dl className="report-summary">
             <div><dt>Lookalikes</dt><dd>{variants ? <>{variants.variants.length} candidates for <code>{variants.domain}</code></> : 'No candidates generated'}</dd></div>
-            <div><dt>Evidence</dt><dd>{observations ? `${observations.length} ${observations.length === 1 ? 'domain' : 'domains'} checked` : 'No domains checked'}</dd></div>
+            <div><dt>Evidence</dt><dd>{observations
+              ? `${observations.length} ${observations.length === 1 ? 'domain' : 'domains'} ${trainingMode ? 'in training evidence' : 'checked'}`
+              : 'No evidence collected'}</dd></div>
             <div><dt>QR Lab</dt><dd>{scan ? <>{scan.findings.length} {scan.findings.length === 1 ? 'finding' : 'findings'} in <code>{scan.file}</code></> : 'No file scanned'}</dd></div>
           </dl>
           <div className="report-exports">

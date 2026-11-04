@@ -93,9 +93,11 @@ function Lookalikes({ selected, setSelected, report, setReport }) {
     <div className="desk variant-layout">
       <form className="sheet" onSubmit={generate} aria-busy={running}>
         <h3>Generate domain variants</h3>
-        <p id="domain-help">{trainingMode ? 'Enter a fictional domain ending in .test, such as ' : 'Enter a two-label domain, such as '}<code>campusdesk.test</code>. Each candidate applies one change.</p>
+        <p id="domain-help">{trainingMode
+          ? <>Enter a domain or paste a website URL. For <code>www.amazon.co.uk</code>, the desk uses <code>amazon.co.uk</code>.</>
+          : <>Enter a two-label domain, such as <code>campusdesk.test</code>.</>} Each candidate applies one change.</p>
         <label htmlFor="domain">Domain</label>
-        <input id="domain" name="domain" defaultValue="campusdesk.test" maxLength="128"
+        <input id="domain" name="domain" defaultValue="campusdesk.test" maxLength={trainingMode ? undefined : 128}
           aria-describedby="domain-help" spellCheck={false} autoCapitalize="none" required disabled={running} />
         {!trainingMode && <>
           <label htmlFor="tlds">Extra suffixes (optional)</label>
@@ -129,7 +131,7 @@ function Lookalikes({ selected, setSelected, report, setReport }) {
                         ? [...selected, row.domain]
                         : selected.filter(domain => domain !== row.domain))} />
                     <span>
-                      <ChangedDomain original={report.domain} candidate={row.unicode_domain ?? row.domain} />
+                      <ChangedDomain original={report.unicode_domain ?? report.domain} candidate={row.unicode_domain ?? row.domain} />
                       {row.unicode_domain && <small>ASCII <code>{row.domain}</code></small>}
                       <small>{row.techniques.map(technique => techniques[technique] ?? technique).join(' · ')}</small>
                     </span>

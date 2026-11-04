@@ -65,19 +65,19 @@ export default function Evidence({ selected, onRemove, results, setResults }) {
             </ul>
           ) : <p><a href="#lookalikes">Choose up to three candidates in Lookalikes.</a></p>}
           <p>{trainingMode
-            ? 'This demo shows the reserved-domain result for fictional names.'
+            ? 'The hosted demo shows sample evidence for .test names and marks live lookups as skipped for other domains.'
             : 'Checking sends public names to RDAP, Google Public DNS, and Cert Spotter. Reserved training names skip external lookups.'}</p>
           <button className="action" type="button" onClick={check} disabled={checking || !selected.length}>
             {checking ? 'Checking evidence…' : 'Check evidence'}
           </button>
-          {checking && <p role="status">Contacting evidence sources. Slow providers can take a moment.</p>}
+          {checking && <p role="status">{trainingMode ? 'Preparing evidence…' : 'Contacting evidence sources. Slow providers can take a moment.'}</p>}
           {error && <p role="alert" className="error">{error}</p>}
         </section>
 
         {results && (
           <section className="ledger" aria-labelledby="observations-title">
             <h3 id="observations-title">Last check</h3>
-            <p role="status">Checked {results.length} {results.length === 1 ? 'candidate' : 'candidates'}.</p>
+            <p role="status">{trainingMode ? 'Evidence shown for' : 'Checked'} {results.length} {results.length === 1 ? 'candidate' : 'candidates'}.</p>
             {results.map(row => (
               <article className="evidence-record" key={row.domain}>
                 <h4><code dir="ltr">{row.domain}</code></h4>

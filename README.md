@@ -23,9 +23,11 @@ is open.
 
 For static training hosting, build from `red-demo/` with
 `npm run build -- --mode training` and serve `dist/`. The training build accepts
-fictional `.test` domains, uses a small set of Unicode lookalikes for custom
-names, and provides simulated evidence and recorded QR results. Local
-development uses the Flask backend for live evidence and file uploads.
+domains and HTTP(S) URLs, generates lookalikes for the base domain in the
+browser, and uses a small set of Unicode substitutions for custom names.
+Evidence uses sample results for `.test` and reports other domains as skipped.
+The QR lab uses recorded results. Local development uses the Flask backend
+for live evidence and file uploads.
 
 ## Milestone 1 Flask API
 
