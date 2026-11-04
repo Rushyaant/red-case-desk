@@ -68,13 +68,13 @@ def inspect_url(raw, source, trusted):
             raise ValueError('ambiguous URL characters')
         url = urlsplit(raw)
         if url.scheme not in {'http', 'https'}:
-            return [{'rule': 'unsupported_url_scheme', 'source': source, 'value': raw}]
+            return None, [{'rule': 'unsupported_url_scheme', 'source': source, 'value': raw}]
         if not url.hostname:
             raise ValueError('missing hostname')
         host = hostname(url.hostname)
         port = url.port  # Also validates the port field.
     except ValueError:
-        return [{'rule': 'invalid_url', 'source': source, 'value': raw}]
+        return None, [{'rule': 'invalid_url', 'source': source, 'value': raw}]
 
     rules = []
     if url.username is not None:
@@ -88,10 +88,10 @@ def inspect_url(raw, source, trusted):
             try:
                 decoded = tail.encode('ascii').decode('idna').translate(CONFUSABLES)
             except UnicodeError:
-                return [{'rule': 'invalid_url', 'source': source, 'value': raw}]
+                return None, [{'rule': 'invalid_url', 'source': source, 'value': raw}]
             if decoded == trusted or similar(decoded, trusted):
                 rules.append('lookalike_host')
-    return [{'rule': rule, 'source': source, 'value': raw, 'destination': host, 'port': port}
+    return host, [{'rule': rule, 'source': source, 'value': raw, 'destination': host, 'port': port}
             for rule in rules]
 
 
@@ -154,12 +154,14 @@ def scan(path, trusted):
     else:
         raise ValueError('expected .eml, .png, .jpg or .jpeg')
 
-    urls = list(dict.fromkeys(urls))
-    for url, source in urls:
-        findings.extend(inspect_url(url, source, trusted))
+    destinations = []
+    for url, source in dict.fromkeys(urls):
+        host, indicators = inspect_url(url, source, trusted)
+        findings.extend(indicators)
+        destinations.append({'value': url, 'source': source, 'destination': host})
     return {'file': str(path), 'trusted_domain': trusted,
             'result': 'review' if findings else 'incomplete' if errors else 'no_indicators',
-            'urls': [{'value': url, 'source': source} for url, source in urls],
+            'urls': destinations,
             'attachments': attachments, 'findings': findings, 'scan_errors': errors}
 
 

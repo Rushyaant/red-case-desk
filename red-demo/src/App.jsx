@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import Evidence from './Evidence.jsx'
+import QrLab from './QrLab.jsx'
+import CaseReport from './CaseReport.jsx'
+import { generateVariants, trainingMode } from './labApi.js'
 
 const assets = import.meta.env.BASE_URL
 const cases = [
@@ -53,8 +57,9 @@ function ChangedDomain({ original, candidate }) {
   )
 }
 
-function Lookalikes() {
-  const [report, setReport] = useState(null)
+const maxSelected = 3
+
+function Lookalikes({ selected, setSelected, report, setReport }) {
   const [error, setError] = useState('')
   const [running, setRunning] = useState(false)
   const [filter, setFilter] = useState('')
@@ -65,28 +70,20 @@ function Lookalikes() {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     setRunning(true)
+    setSelected([])
     setReport(null)
     setError('')
     setFilter('')
     setLimit(12)
     try {
-      const response = await fetch('/api/red/variants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          domain: form.get('domain'),
-          tlds: String(form.get('tlds')).split(/[,\s]+/).filter(Boolean),
-          unicode: form.has('unicode'),
-        }),
+      const body = await generateVariants({
+        domain: form.get('domain'),
+        tlds: String(form.get('tlds') ?? '').split(/[,\s]+/).filter(Boolean),
+        unicode: form.has('unicode'),
       })
-      const body = await response.json().catch(() => null)
-      if (!response.ok || !Array.isArray(body?.variants)) {
-        setError(body?.error || 'Start the local Flask server on port 8000, then try again.')
-        return
-      }
       setReport(body)
-    } catch {
-      setError('Start the local Flask server on port 8000, then try again.')
+    } catch (failure) {
+      setError(failure.message)
     } finally {
       setRunning(false)
     }
@@ -99,9 +96,11 @@ function Lookalikes() {
         <p id="domain-help">Enter a two-label domain, such as <code>campusdesk.test</code>. Each candidate applies one change.</p>
         <label htmlFor="domain">Domain</label>
         <input id="domain" name="domain" defaultValue="campusdesk.test" maxLength="128"
-          aria-describedby="domain-help" spellCheck={false} autoCapitalize="none" required disabled={running} />
-        <label htmlFor="tlds">Extra suffixes (optional)</label>
-        <input id="tlds" name="tlds" placeholder="co, org" maxLength="512" disabled={running} />
+          aria-describedby="domain-help" spellCheck={false} autoCapitalize="none" required readOnly={trainingMode} disabled={running} />
+        {!trainingMode && <>
+          <label htmlFor="tlds">Extra suffixes (optional)</label>
+          <input id="tlds" name="tlds" placeholder="co, org" maxLength="512" disabled={running} />
+        </>}
         <label className="check"><input type="checkbox" name="unicode" defaultChecked disabled={running} />Include Unicode lookalikes</label>
         <button className="action" type="submit" disabled={running}>{running ? 'Generating…' : 'Generate variants'}</button>
         {error && <p className="error" role="alert">{error}</p>}
@@ -118,12 +117,23 @@ function Lookalikes() {
               {Object.entries(techniques).map(([id, title]) => <option key={id} value={id}>{title}</option>)}
             </select>
             <p>{matching.length} matching · {Math.min(limit, matching.length)} shown</p>
+            <p>{selected.length} / {maxSelected} selected. <a href="#evidence">Open Evidence</a></p>
             <ul className="variants">
               {matching.slice(0, limit).map(row => (
                 <li key={row.domain}>
-                  <ChangedDomain original={report.domain} candidate={row.unicode_domain ?? row.domain} />
-                  {row.unicode_domain && <small>ASCII <code>{row.domain}</code></small>}
-                  <small>{row.techniques.map(technique => techniques[technique] ?? technique).join(' · ')}</small>
+                  <label className="candidate">
+                    <input type="checkbox" aria-label={`Select ${row.domain}`}
+                      checked={selected.includes(row.domain)}
+                      disabled={selected.length >= maxSelected && !selected.includes(row.domain)}
+                      onChange={event => setSelected(event.target.checked
+                        ? [...selected, row.domain]
+                        : selected.filter(domain => domain !== row.domain))} />
+                    <span>
+                      <ChangedDomain original={report.domain} candidate={row.unicode_domain ?? row.domain} />
+                      {row.unicode_domain && <small>ASCII <code>{row.domain}</code></small>}
+                      <small>{row.techniques.map(technique => techniques[technique] ?? technique).join(' · ')}</small>
+                    </span>
+                  </label>
                 </li>
               ))}
             </ul>
@@ -136,11 +146,16 @@ function Lookalikes() {
 }
 
 export default function App() {
+  const [selected, setSelected] = useState([])
+  const [variants, setVariants] = useState(null)
+  const [observations, setObservations] = useState(null)
+  const [scan, setScan] = useState(null)
+
   return (
     <>
       <nav className="chapter-nav" aria-label="Chapters">
         <span>Red Case Desk</span>
-        <div><a href="#intake">01 Intake</a><a href="#lookalikes">02 Lookalikes</a></div>
+        <div><a href="#intake">01 Intake</a><a href="#lookalikes">02 Lookalikes</a><a href="#evidence">03 Evidence</a><a href="#qr-lab">04 QR Lab</a><a href="#case-report">05 Report</a></div>
       </nav>
       <main>
         <section id="intake" aria-labelledby="intake-title">
@@ -149,7 +164,7 @@ export default function App() {
             <div className="scene-copy">
               <h1 id="intake-title">Phishing<br />Case Desk</h1>
               <p>Open a fictional Campus Desk case and inspect the evidence.</p>
-              <span className="stamp">Simulation</span>
+              <span className="stamp">{trainingMode ? 'Hosted training' : 'Simulation'}</span>
             </div>
           </header>
           <Intake />
@@ -162,8 +177,12 @@ export default function App() {
               <p>Examine how a small change turns a familiar domain into a different address.</p>
             </div>
           </header>
-          <Lookalikes />
+          <Lookalikes selected={selected} setSelected={setSelected} report={variants} setReport={setVariants} />
         </section>
+        <Evidence selected={selected} onRemove={name => setSelected(selected.filter(domain => domain !== name))}
+          results={observations} setResults={setObservations} />
+        <QrLab report={scan} setReport={setScan} />
+        <CaseReport variants={variants} observations={observations} scan={scan} selected={selected} />
       </main>
     </>
   )

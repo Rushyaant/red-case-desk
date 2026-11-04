@@ -1,8 +1,11 @@
 """Local Flask API for the red simulation and blue triage web apps."""
 
+from http.client import HTTPException
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from threading import Lock
+from urllib.request import build_opener
 
 from flask import Flask, request, send_file
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -10,12 +13,15 @@ from werkzeug.utils import secure_filename
 
 from domain_variants import generate_variants
 from generate import CASES, generate
+from rdap_check import LAB_SUFFIXES, NoRedirects, check_targets, load_registry, normalize_domain, service_for
 from triage import MAX_BYTES, scan
 
 app = Flask(__name__)
 app.config.update(MAX_CONTENT_LENGTH=MAX_BYTES + 64_000,
                   TRUSTED_HOSTS=['localhost', '127.0.0.1'])
 CONFUSABLES_FILE = Path(__file__).resolve().parent / 'data' / 'confusables-16.0.0.txt'
+MAX_EVIDENCE_DOMAINS = 3
+evidence_lock = Lock()
 
 
 @app.before_request
@@ -118,6 +124,38 @@ def red_variants():
     except OSError:
         return {'error': 'The local Unicode table is unavailable.'}, 503
     return {'domain': domain.lower().removesuffix('.'), 'variants': variants}
+
+
+@app.post('/api/red/evidence')
+def red_evidence():
+    request.max_content_length = 4096
+    try:
+        body = request.get_json(silent=True)
+    except RequestEntityTooLarge:
+        return {'error': 'Evidence requests must be at most 4 KB.'}, 413
+    names = body.get('domains') if isinstance(body, dict) else None
+    if not isinstance(names, list) or not 1 <= len(names) <= MAX_EVIDENCE_DOMAINS:
+        return {'error': f'Select one to {MAX_EVIDENCE_DOMAINS} domains.'}, 400
+    try:
+        domains = list(dict.fromkeys(normalize_domain(name) for name in names))
+    except ValueError as error:
+        return {'error': str(error)}, 400
+
+    if not evidence_lock.acquire(blocking=False):
+        return {'error': 'An evidence check is already running. Try again when it finishes.'}, 429
+    try:
+        opener = build_opener(NoRedirects())
+        registry, registry_error = {}, None
+        if any(not domain.endswith(LAB_SUFFIXES) for domain in domains):
+            try:
+                registry = load_registry(opener)
+            except (OSError, HTTPException, ValueError) as error:
+                registry_error = str(error)
+        targets = [(domain, None if domain.endswith(LAB_SUFFIXES) else service_for(domain, registry))
+                   for domain in domains]
+        return {'results': check_targets(opener, targets, evidence=True, registry_error=registry_error)}
+    finally:
+        evidence_lock.release()
 
 
 if __name__ == '__main__':

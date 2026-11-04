@@ -180,6 +180,31 @@ def collect_evidence(opener, domain, limited):
     return evidence
 
 
+def check_targets(opener, targets, *, evidence=False, registry_error=None):
+    results = []
+    queried = False
+    rate_limited = False
+    evidence_limited = set()
+    for domain, service in targets:
+        network_target = service or (evidence and not domain.endswith(LAB_SUFFIXES))
+        if network_target and queried:
+            sleep(1)
+        queried = queried or bool(network_target)
+        if registry_error is not None and not domain.endswith(LAB_SUFFIXES):
+            row = {'domain': domain, 'status': 'unavailable', 'reason': registry_error}
+        elif service is None:
+            row = {'domain': domain, 'status': 'unsupported_suffix'}
+        elif rate_limited:
+            row = {'domain': domain, 'status': 'skipped', 'reason': 'previous query was rate limited'}
+        else:
+            row = check_domain(opener, domain, service)
+            rate_limited = row['status'] == 'rate_limited'
+        if evidence:
+            row['evidence'] = collect_evidence(opener, domain, evidence_limited)
+        results.append(row)
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('domains', nargs='*', help='explicit domain names to check')
@@ -221,27 +246,7 @@ def main():
         if not targets:
             parser.exit(2, 'error: candidate file has no eligible domains for the selected checks\n')
 
-    results = []
-    queried = False
-    rate_limited = False
-    evidence_limited = set()
-    for domain, service in targets:
-        network_target = service or (args.evidence and not domain.endswith(LAB_SUFFIXES))
-        if network_target and queried:
-            sleep(1)
-        queried = queried or bool(network_target)
-        if registry_error is not None and not domain.endswith(LAB_SUFFIXES):
-            row = {'domain': domain, 'status': 'unavailable', 'reason': registry_error}
-        elif service is None:
-            row = {'domain': domain, 'status': 'unsupported_suffix'}
-        elif rate_limited:
-            row = {'domain': domain, 'status': 'skipped', 'reason': 'previous query was rate limited'}
-        else:
-            row = check_domain(opener, domain, service)
-            rate_limited = row['status'] == 'rate_limited'
-        if args.evidence:
-            row['evidence'] = collect_evidence(opener, domain, evidence_limited)
-        results.append(row)
+    results = check_targets(opener, targets, evidence=args.evidence, registry_error=registry_error)
     print(json.dumps(results, indent=2))
 
 

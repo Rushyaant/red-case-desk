@@ -1,5 +1,31 @@
 # Phishing web lab
 
+## Red Case Desk
+
+Run `python3 -B app.py` from `backend/`. In a separate terminal, run
+`npm ci` and `npm run dev` from `red-demo/`. Open the local URL Vite prints.
+
+In Lookalikes, generate candidates and select up to three. Open Evidence and
+choose **Check evidence** to compare RDAP, IPv4, IPv6, and certificate
+transparency results. Use the default `campusdesk.test` to try the workflow
+with reserved names. Add `co, org` as extra suffixes and filter by TLD swap
+to try public lookups. Public names are sent to the corresponding RDAP
+service, Google Public DNS, and Cert Spotter.
+
+In QR Lab, scan a built-in training QR, upload a saved file, or use the
+camera photo input on a supported device. The local scanner decodes the
+payload and shows the destination and indicators as text.
+
+Case Report collects the session’s variants, evidence, and QR results.
+Export JSON, CSV, or HTML. The local watchlist saves up to three selected
+domains in the browser and can recheck them every ten minutes while the page
+is open.
+
+For static training hosting, build from `red-demo/` with
+`npm run build -- --mode training` and serve `dist/`. The training build uses
+built-in `.test` candidates and recorded QR results. Local development uses
+the Flask backend for live evidence and file uploads.
+
 ## Milestone 1 Flask API
 
 The planned React apps use two distinct workflows. The red interface
