@@ -22,9 +22,10 @@ domains in the browser and can recheck them every ten minutes while the page
 is open.
 
 For static training hosting, build from `red-demo/` with
-`npm run build -- --mode training` and serve `dist/`. The training build uses
-built-in `.test` candidates and recorded QR results. Local development uses
-the Flask backend for live evidence and file uploads.
+`npm run build -- --mode training` and serve `dist/`. The training build accepts
+fictional `.test` domains, uses a small set of Unicode lookalikes for custom
+names, and provides simulated evidence and recorded QR results. Local
+development uses the Flask backend for live evidence and file uploads.
 
 ## Milestone 1 Flask API
 

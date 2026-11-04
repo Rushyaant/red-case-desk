@@ -93,10 +93,10 @@ function Lookalikes({ selected, setSelected, report, setReport }) {
     <div className="desk variant-layout">
       <form className="sheet" onSubmit={generate} aria-busy={running}>
         <h3>Generate domain variants</h3>
-        <p id="domain-help">Enter a two-label domain, such as <code>campusdesk.test</code>. Each candidate applies one change.</p>
+        <p id="domain-help">{trainingMode ? 'Enter a fictional domain ending in .test, such as ' : 'Enter a two-label domain, such as '}<code>campusdesk.test</code>. Each candidate applies one change.</p>
         <label htmlFor="domain">Domain</label>
         <input id="domain" name="domain" defaultValue="campusdesk.test" maxLength="128"
-          aria-describedby="domain-help" spellCheck={false} autoCapitalize="none" required readOnly={trainingMode} disabled={running} />
+          aria-describedby="domain-help" spellCheck={false} autoCapitalize="none" required disabled={running} />
         {!trainingMode && <>
           <label htmlFor="tlds">Extra suffixes (optional)</label>
           <input id="tlds" name="tlds" placeholder="co, org" maxLength="512" disabled={running} />

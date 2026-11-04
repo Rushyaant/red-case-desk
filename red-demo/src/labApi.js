@@ -1,3 +1,5 @@
+import { generateTrainingVariants, isTrainingDomain } from './trainingVariants.js'
+
 export const trainingMode = import.meta.env.MODE === 'training'
 
 async function read(response) {
@@ -20,15 +22,20 @@ async function post(path, body) {
 
 export async function generateVariants(options) {
   if (!trainingMode) return post('/api/red/variants', options)
+  const input = options.domain.trim()
+  const domain = input.toLowerCase()
+  if (!/^[a-zA-Z0-9.-]+$/.test(input) || !isTrainingDomain(domain) || domain.startsWith('xn--')) {
+    throw new Error('Enter a fictional domain ending in .test, such as librarydesk.test. Use ASCII letters, numbers, or hyphens.')
+  }
+  if (domain !== 'campusdesk.test') return generateTrainingVariants(domain, options.unicode)
   const { variants } = await trainingData()
   return { ...variants, variants: options.unicode ? variants.variants : variants.variants.filter(row => !row.unicode_domain) }
 }
 
 export async function checkEvidence(domains) {
   if (!trainingMode) return post('/api/red/evidence', { domains })
-  const { reservedEvidence, variants } = await trainingData()
-  const candidates = new Set(variants.variants.map(row => row.domain))
-  if (!domains.every(domain => candidates.has(domain))) throw new Error('Select candidates from the hosted training case.')
+  if (!domains.every(isTrainingDomain)) throw new Error('Select fictional .test candidates from Lookalikes.')
+  const { reservedEvidence } = await trainingData()
   return { results: domains.map(domain => ({ ...reservedEvidence, domain })) }
 }
 
