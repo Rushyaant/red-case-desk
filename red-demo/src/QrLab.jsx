@@ -123,49 +123,40 @@ export default function QrLab({ report, setReport }) {
   }
 
   return (
-    <section id="qr-lab" aria-labelledby="qr-title">
-      <header className="scene scene-qr">
-        <img className="scene-art" src={`${assets}scenes/qr-lab.webp`} alt="" width="1536" height="343" />
-        <div className="scene-copy">
-          <h2 id="qr-title">QR Lab</h2>
-          <p>Decode a QR and inspect the destination in plain text.</p>
-        </div>
-      </header>
-      <div className="desk variant-layout">
-        <section className="sheet qr-form" aria-labelledby="scan-title" aria-busy={scanning}>
-          <h3 id="scan-title">Scan an exhibit</h3>
-          <p>{trainingMode ? 'Choose a built-in QR to see its recorded scan.' : 'The local scanner reads the file offline and displays the address as text.'}</p>
-          {!trainingMode && <>
-          <label htmlFor="qr-file">Upload an EML, PNG, or JPEG</label>
-          <input id="qr-file" type="file" accept=".eml,.png,.jpg,.jpeg" disabled={scanning}
-            onChange={event => setFile(event.target.files[0] ?? null)} />
-          <button className="action" type="button" disabled={scanning || !file} onClick={() => scan(() => file)}>Scan file</button>
+    <div className="desk variant-layout">
+      <section className="sheet qr-form" aria-labelledby="scan-title" aria-busy={scanning}>
+        <h3 id="scan-title">Scan an exhibit</h3>
+        <p>{trainingMode ? 'Choose a built-in QR to see its recorded scan.' : 'The local scanner reads the file offline and displays the address as text.'}</p>
+        {!trainingMode && <>
+        <label htmlFor="qr-file">Upload an EML, PNG, or JPEG</label>
+        <input id="qr-file" type="file" accept=".eml,.png,.jpg,.jpeg" disabled={scanning}
+          onChange={event => setFile(event.target.files[0] ?? null)} />
+        <button className="action" type="button" disabled={scanning || !file} onClick={() => scan(() => file)}>Scan file</button>
 
-          <label htmlFor="qr-camera">Capture a QR photo</label>
-          <input id="qr-camera" type="file" accept="image/*" capture="environment" disabled={scanning}
-            onChange={event => setPhoto(event.target.files[0] ?? null)} />
-          <button className="action" type="button" disabled={scanning || !photo} onClick={() => scan(() => preparePhoto(photo))}>Scan photo</button>
-          </>}
+        <label htmlFor="qr-camera">Capture a QR photo</label>
+        <input id="qr-camera" type="file" accept="image/*" capture="environment" disabled={scanning}
+          onChange={event => setPhoto(event.target.files[0] ?? null)} />
+        <button className="action" type="button" disabled={scanning || !photo} onClick={() => scan(() => preparePhoto(photo))}>Scan photo</button>
+        </>}
 
-          <div className="qr-sample">
-            <label htmlFor="qr-sample">Training QR</label>
-            <select id="qr-sample" value={sample} onChange={event => setSample(event.target.value)} disabled={scanning}>
-              {Object.entries(samples).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-            <div className="qr-sample-actions">
-              <button className="action" type="button" disabled={scanning} onClick={scanSample}>Scan sample</button>
-              <a href={samplePath} download>Download PNG</a>
-            </div>
+        <div className="qr-sample">
+          <label htmlFor="qr-sample">Training QR</label>
+          <select id="qr-sample" value={sample} onChange={event => setSample(event.target.value)} disabled={scanning}>
+            {Object.entries(samples).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <div className="qr-sample-actions">
+            <button className="action" type="button" disabled={scanning} onClick={scanSample}>Scan sample</button>
+            <a href={samplePath} download>Download PNG</a>
           </div>
-          {scanning && <p role="status">Scanning locally…</p>}
-          {error && <p className="error" role="alert">{error}</p>}
-        </section>
+        </div>
+        {scanning && <p role="status">Scanning locally…</p>}
+        {error && <p className="error" role="alert">{error}</p>}
+      </section>
 
-        <section className="ledger qr-findings" aria-labelledby="qr-findings-title">
-          <h3 id="qr-findings-title">Scan results</h3>
-          {report ? <Report report={report} /> : <p>Decoded payloads, destination hosts, and findings appear here.</p>}
-        </section>
-      </div>
-    </section>
+      <section className="ledger qr-findings" aria-labelledby="qr-findings-title">
+        <h3 id="qr-findings-title">Scan results</h3>
+        {report ? <Report report={report} /> : <p>Decoded payloads, destination hosts, and findings appear here.</p>}
+      </section>
+    </div>
   )
 }

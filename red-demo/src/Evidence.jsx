@@ -47,51 +47,45 @@ export default function Evidence({ selected, onRemove, results, setResults }) {
   }
 
   return (
-    <section id="evidence" aria-labelledby="evidence-title" className="evidence-chapter">
-      <header className="desk evidence-heading">
-        <h2 id="evidence-title">Evidence</h2>
-        <p>Compare registry, DNS, and certificate observations for the same candidate. Each source has its own result.</p>
-      </header>
-      <div className="desk evidence-desk">
-        <section className="sheet" aria-labelledby="selected-title">
-          <h3 id="selected-title">Selected candidates</h3>
-          {selected.length ? (
-            <ul className="evidence-selection">
-              {selected.map(domain => (
-                <li key={domain}><code dir="ltr">{domain}</code>
-                  <button type="button" className="more" aria-label={`Remove ${domain}`} onClick={() => onRemove(domain)}>Remove</button>
-                </li>
-              ))}
-            </ul>
-          ) : <p><a href="#lookalikes">Choose up to three candidates in Lookalikes.</a></p>}
-          <p>{trainingMode
-            ? 'The hosted demo shows sample evidence for .test names and marks live lookups as skipped for other domains.'
-            : 'Checking sends public names to RDAP, Google Public DNS, and Cert Spotter. Reserved training names skip external lookups.'}</p>
-          <button className="action" type="button" onClick={check} disabled={checking || !selected.length}>
-            {checking ? 'Checking evidence…' : 'Check evidence'}
-          </button>
-          {checking && <p role="status">{trainingMode ? 'Preparing evidence…' : 'Contacting evidence sources. Slow providers can take a moment.'}</p>}
-          {error && <p role="alert" className="error">{error}</p>}
-        </section>
-
-        {results && (
-          <section className="ledger" aria-labelledby="observations-title">
-            <h3 id="observations-title">Last check</h3>
-            <p role="status">{trainingMode ? 'Evidence shown for' : 'Checked'} {results.length} {results.length === 1 ? 'candidate' : 'candidates'}.</p>
-            {results.map(row => (
-              <article className="evidence-record" key={row.domain}>
-                <h4><code dir="ltr">{row.domain}</code></h4>
-                <dl>
-                  <EvidenceSource label="RDAP" result={row} />
-                  <EvidenceSource label="DNS · A" result={row.evidence.dns_a} />
-                  <EvidenceSource label="DNS · AAAA" result={row.evidence.dns_aaaa} />
-                  <EvidenceSource label="Certificate transparency" result={row.evidence.ct} />
-                </dl>
-              </article>
+    <div className="desk">
+      <section className="sheet" aria-labelledby="selected-title">
+        <h3 id="selected-title">Selected candidates</h3>
+        {selected.length ? (
+          <ul className="evidence-selection">
+            {selected.map(domain => (
+              <li key={domain}><code dir="ltr">{domain}</code>
+                <button type="button" className="more" aria-label={`Remove ${domain}`} onClick={() => onRemove(domain)}>Remove</button>
+              </li>
             ))}
-          </section>
-        )}
-      </div>
-    </section>
+          </ul>
+        ) : <p><a href="#lookalikes">Choose up to three candidates in Lookalikes.</a></p>}
+        <p>{trainingMode
+          ? 'The hosted demo shows sample evidence for .test names and marks live lookups as skipped for other domains.'
+          : 'Checking sends public names to RDAP, Google Public DNS, and Cert Spotter. Reserved training names skip external lookups.'}</p>
+        <button className="action" type="button" onClick={check} disabled={checking || !selected.length}>
+          {checking ? 'Checking evidence…' : 'Check evidence'}
+        </button>
+        {checking && <p role="status">{trainingMode ? 'Preparing evidence…' : 'Contacting evidence sources. Slow providers can take a moment.'}</p>}
+        {error && <p role="alert" className="error">{error}</p>}
+      </section>
+
+      {results && (
+        <section className="ledger" aria-labelledby="observations-title">
+          <h3 id="observations-title">Last check</h3>
+          <p role="status">{trainingMode ? 'Evidence shown for' : 'Checked'} {results.length} {results.length === 1 ? 'candidate' : 'candidates'}.</p>
+          {results.map(row => (
+            <article className="evidence-record" key={row.domain}>
+              <h4><code dir="ltr">{row.domain}</code></h4>
+              <dl>
+                <EvidenceSource label="RDAP" result={row} />
+                <EvidenceSource label="DNS · A" result={row.evidence.dns_a} />
+                <EvidenceSource label="DNS · AAAA" result={row.evidence.dns_aaaa} />
+                <EvidenceSource label="Certificate transparency" result={row.evidence.ct} />
+              </dl>
+            </article>
+          ))}
+        </section>
+      )}
+    </div>
   )
 }

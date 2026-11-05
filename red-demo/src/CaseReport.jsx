@@ -127,63 +127,57 @@ export default function CaseReport({ variants, observations, scan, selected }) {
 
   const hasReport = Boolean(variants || observations || scan || watchResults)
   return (
-    <section id="case-report" aria-labelledby="case-report-title" className="evidence-chapter">
-      <header className="desk evidence-heading">
-        <h2 id="case-report-title">Case Report</h2>
-        <p>Review the current session and save a copy for your records.</p>
-      </header>
-      <div className="desk variant-layout report-desk">
-        <article className="sheet" aria-labelledby="report-summary-title">
-          <h3 id="report-summary-title">Session summary</h3>
-          <dl className="report-summary">
-            <div><dt>Lookalikes</dt><dd>{variants ? <>{variants.variants.length} candidates for <code>{variants.domain}</code></> : 'No candidates generated'}</dd></div>
-            <div><dt>Evidence</dt><dd>{observations
-              ? `${observations.length} ${observations.length === 1 ? 'domain' : 'domains'} ${trainingMode ? 'in training evidence' : 'checked'}`
-              : 'No evidence collected'}</dd></div>
-            <div><dt>QR Lab</dt><dd>{scan ? <>{scan.findings.length} {scan.findings.length === 1 ? 'finding' : 'findings'} in <code>{scan.file}</code></> : 'No file scanned'}</dd></div>
-          </dl>
-          <div className="report-exports">
-            {['json', 'csv', 'html'].map(format => (
-              <button key={format} type="button" className="action" disabled={!hasReport} onClick={() => download(format)}>Export {format.toUpperCase()}</button>
-            ))}
-          </div>
-        </article>
+    <div className="desk variant-layout">
+      <article className="sheet" aria-labelledby="report-summary-title">
+        <h3 id="report-summary-title">Session summary</h3>
+        <dl className="report-summary">
+          <div><dt>Lookalikes</dt><dd>{variants ? <>{variants.variants.length} candidates for <code>{variants.domain}</code></> : 'No candidates generated'}</dd></div>
+          <div><dt>Evidence</dt><dd>{observations
+            ? `${observations.length} ${observations.length === 1 ? 'domain' : 'domains'} ${trainingMode ? 'in training evidence' : 'checked'}`
+            : 'No evidence collected'}</dd></div>
+          <div><dt>QR Lab</dt><dd>{scan ? <>{scan.findings.length} {scan.findings.length === 1 ? 'finding' : 'findings'} in <code>{scan.file}</code></> : 'No file scanned'}</dd></div>
+        </dl>
+        <div className="report-exports">
+          {['json', 'csv', 'html'].map(format => (
+            <button key={format} type="button" className="action" disabled={!hasReport} onClick={() => download(format)}>Export {format.toUpperCase()}</button>
+          ))}
+        </div>
+      </article>
 
-        <div className="ledger">
-          <h3>Watchlist</h3>
-          {trainingMode ? <p>Live monitoring is available in the local lab.</p> : (
-            <>
-              <p>Save up to three selected candidates in this browser. Checks use the same public sources as Evidence.</p>
-              {watchlist.length > 0 && <ul className="evidence-selection">
-                {watchlist.map(domain => <li key={domain}><code>{domain}</code>
-                  <button className="more" type="button" disabled={checking} aria-label={`Remove ${domain} from watchlist`}
-                    onClick={() => setWatchlist(watchlist.filter(name => name !== domain))}>Remove</button>
-                </li>)}
-              </ul>}
-              <div className="report-exports">
-                <button className="action" type="button" disabled={!selected.length || checking} onClick={saveSelected}>Save selected candidates</button>
-                <button className="action" type="button" disabled={!watchlist.length || checking} onClick={check}>{checking ? 'Checking…' : 'Check watchlist now'}</button>
-              </div>
-              <label className="check"><input type="checkbox" checked={autoCheck} onChange={event => setAutoCheck(event.target.checked)} />Recheck every 10 minutes while this page is open</label>
-              {storageError && <p role="status">{storageError}</p>}
-              {message && <p className="error" role="alert">{message}</p>}
-              {watchResults && <div role="status">
-                <p>Last watchlist check <time dateTime={watchResults.time}>{new Date(watchResults.time).toLocaleString()}</time></p>
-                <ul className="variants">{watchResults.rows.map(row => (
-                  <li key={row.domain}><code>{row.domain}</code>
-                    <small>RDAP {row.status} · A {row.evidence.dns_a.status} · AAAA {row.evidence.dns_aaaa.status} · CT {row.evidence.ct.status}</small>
-                  </li>
-                ))}</ul>
-              </div>}
-            </>
-          )}
-          <div className="report-notes">
-            <h3>Campaign notes</h3>
-            <p>Microsoft’s Defender team documented QR phishing that used images to carry deceptive destinations. Compare the decoded host with the domain you expected before treating a QR as trustworthy.</p>
-            <p><a href="https://www.microsoft.com/en-us/security/blog/2024/11/04/how-microsoft-defender-for-office-365-innovated-to-address-qr-code-phishing-attacks/">Microsoft’s QR phishing analysis</a></p>
-          </div>
+      <div className="ledger">
+        <h3>Watchlist</h3>
+        {trainingMode ? <p>Live monitoring is available in the local lab.</p> : (
+          <>
+            <p>Save up to three selected candidates in this browser. Checks use the same public sources as Evidence.</p>
+            {watchlist.length > 0 && <ul className="evidence-selection">
+              {watchlist.map(domain => <li key={domain}><code>{domain}</code>
+                <button className="more" type="button" disabled={checking} aria-label={`Remove ${domain} from watchlist`}
+                  onClick={() => setWatchlist(watchlist.filter(name => name !== domain))}>Remove</button>
+              </li>)}
+            </ul>}
+            <div className="report-exports">
+              <button className="action" type="button" disabled={!selected.length || checking} onClick={saveSelected}>Save selected candidates</button>
+              <button className="action" type="button" disabled={!watchlist.length || checking} onClick={check}>{checking ? 'Checking…' : 'Check watchlist now'}</button>
+            </div>
+            <label className="check"><input type="checkbox" checked={autoCheck} onChange={event => setAutoCheck(event.target.checked)} />Recheck every 10 minutes while this page is open</label>
+            {storageError && <p role="status">{storageError}</p>}
+            {message && <p className="error" role="alert">{message}</p>}
+            {watchResults && <div role="status">
+              <p>Last watchlist check <time dateTime={watchResults.time}>{new Date(watchResults.time).toLocaleString()}</time></p>
+              <ul className="variants">{watchResults.rows.map(row => (
+                <li key={row.domain}><code>{row.domain}</code>
+                  <small>RDAP {row.status} · A {row.evidence.dns_a.status} · AAAA {row.evidence.dns_aaaa.status} · CT {row.evidence.ct.status}</small>
+                </li>
+              ))}</ul>
+            </div>}
+          </>
+        )}
+        <div className="report-notes">
+          <h3>Campaign notes</h3>
+          <p>Microsoft’s Defender team documented QR phishing that used images to carry deceptive destinations. Compare the decoded host with the domain you expected before treating a QR as trustworthy.</p>
+          <p><a href="https://www.microsoft.com/en-us/security/blog/2024/11/04/how-microsoft-defender-for-office-365-innovated-to-address-qr-code-phishing-attacks/">Microsoft’s QR phishing analysis</a></p>
         </div>
       </div>
-    </section>
+    </div>
   )
 }

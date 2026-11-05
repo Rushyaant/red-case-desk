@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import SceneStage from './SceneStage.jsx'
 import Evidence from './Evidence.jsx'
 import QrLab from './QrLab.jsx'
 import CaseReport from './CaseReport.jsx'
@@ -147,45 +148,65 @@ function Lookalikes({ selected, setSelected, report, setReport }) {
   )
 }
 
+const chapters = [
+  { id: 'intake', label: 'Intake', title: 'Phishing Case Desk', location: 'Zhujiajiao', image: 'zhujiajiao', position: '71%', description: 'Open a fictional Campus Desk case and inspect the evidence.' },
+  { id: 'lookalikes', label: 'Lookalikes', location: 'Wukang Mansion', image: 'wukang', position: '29%', align: 'end', description: 'Examine how a small change turns a familiar domain into a different address.' },
+  { id: 'evidence', label: 'Evidence', location: 'Yuyuan Garden', image: 'yuyuan', position: '67%', description: 'Compare registry, DNS, and certificate observations for the same candidate. Each source has its own result.' },
+  { id: 'qr-lab', label: 'QR Lab', location: 'The Bund', image: 'bund', position: '29%', align: 'end', description: 'Decode a QR and inspect the destination in plain text.' },
+  { id: 'case-report', label: 'Report', title: 'Case Report', location: 'Lujiazui', image: 'lujiazui', position: '74%', dark: true, description: 'Review the current session and save a copy for your records.' },
+].map(chapter => ({ ...chapter, image: `${assets}scenes/${chapter.image}.webp` }))
+
 export default function App() {
+  const main = useRef(null)
   const [selected, setSelected] = useState([])
   const [variants, setVariants] = useState(null)
   const [observations, setObservations] = useState(null)
   const [scan, setScan] = useState(null)
 
+  useEffect(() => {
+    // React mounts the chapter targets after the browser's initial fragment lookup.
+    if (window.scrollY === 0 && window.location.hash) {
+      document.getElementById(window.location.hash.slice(1))?.scrollIntoView()
+    }
+  }, [])
+
+  const desks = {
+    intake: <Intake />,
+    lookalikes: <Lookalikes selected={selected} setSelected={setSelected} report={variants} setReport={setVariants} />,
+    evidence: <Evidence selected={selected} onRemove={name => setSelected(selected.filter(domain => domain !== name))}
+      results={observations} setResults={setObservations} />,
+    'qr-lab': <QrLab report={scan} setReport={setScan} />,
+    'case-report': <CaseReport variants={variants} observations={observations} scan={scan} selected={selected} />,
+  }
+
   return (
     <>
       <nav className="chapter-nav" aria-label="Chapters">
         <span>Red Case Desk</span>
-        <div><a href="#intake">01 Intake</a><a href="#lookalikes">02 Lookalikes</a><a href="#evidence">03 Evidence</a><a href="#qr-lab">04 QR Lab</a><a href="#case-report">05 Report</a></div>
+        <div>{chapters.map(({ id, label }, index) => (
+          <a key={id} href={`#${id}`}>0{index + 1} {label}</a>
+        ))}</div>
       </nav>
-      <main>
-        <section id="intake" aria-labelledby="intake-title">
-          <header className="scene scene-intake">
-            <img className="scene-art" src={`${assets}scenes/intake.webp`} alt="" width="1536" height="333" />
-            <div className="scene-copy">
-              <h1 id="intake-title">Phishing<br />Case Desk</h1>
-              <p>Open a fictional Campus Desk case and inspect the evidence.</p>
-              <span className="stamp">{trainingMode ? 'Hosted training' : 'Simulation'}</span>
-            </div>
-          </header>
-          <Intake />
-        </section>
-        <section id="lookalikes" aria-labelledby="lookalikes-title">
-          <header className="scene scene-lookalikes">
-            <img className="scene-art" src={`${assets}scenes/lookalikes.webp`} alt="" width="1536" height="328" />
-            <div className="scene-copy">
-              <h2 id="lookalikes-title">Lookalikes</h2>
-              <p>Examine how a small change turns a familiar domain into a different address.</p>
-            </div>
-          </header>
-          <Lookalikes selected={selected} setSelected={setSelected} report={variants} setReport={setVariants} />
-        </section>
-        <Evidence selected={selected} onRemove={name => setSelected(selected.filter(domain => domain !== name))}
-          results={observations} setResults={setObservations} />
-        <QrLab report={scan} setReport={setScan} />
-        <CaseReport variants={variants} observations={observations} scan={scan} selected={selected} />
+      <main ref={main}>
+        {chapters.map(({ id, label, title, location, description, image, position, align, dark }, index) => {
+          const Heading = index === 0 ? 'h1' : 'h2'
+          return (
+            <section key={id} id={id} aria-labelledby={`${id}-title`}>
+              <header className="scene" data-align={align} data-dark={dark}
+                style={{ '--scene-image': `url("${image}")`, '--scene-position': position }}>
+                <div className="scene-copy">
+                  <Heading id={`${id}-title`}>{title ?? label}</Heading>
+                  <p>{description}</p>
+                  {index === 0 && <span className="stamp">{trainingMode ? 'Hosted training' : 'Simulation'}</span>}
+                </div>
+                <span className="scene-location">{location}</span>
+              </header>
+              <div className="chapter-body">{desks[id]}</div>
+            </section>
+          )
+        })}
       </main>
+      <SceneStage chapters={chapters} main={main} />
     </>
   )
 }
