@@ -1,0 +1,65 @@
+.spatial-document,
+.spatial-document body { overflow: hidden; }
+
+main[data-spatial] {
+  position: fixed;
+  top: var(--navigation-height, 3.5rem);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+  overflow: clip;
+}
+
+.camera-world { transform-style: preserve-3d; }
+main[data-spatial] .camera-world { width: 100%; height: 100%; }
+main[data-spatial] .camera-world > section {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y pinch-zoom;
+  scrollbar-gutter: stable;
+  padding-bottom: 3.5rem;
+}
+main[data-spatial][data-moving] .camera-world { will-change: transform; }
+main[data-spatial][data-instant] { perspective: none; }
+main[data-spatial][data-instant] .camera-world { transform-style: flat; }
+main[data-spatial] .scene-copy { opacity: var(--copy-opacity, 1); }
+main[data-spatial] h1:focus, main[data-spatial] h2:focus { outline-offset: 8px; }
+
+.camera-controls {
+  position: fixed;
+  z-index: 3;
+  inset-inline-end: 1rem;
+  bottom: max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+  max-width: calc(100% - 2rem);
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+.camera-controls button {
+  min-height: 2.5rem;
+  padding: 0.2rem 0.3rem;
+  border: 0;
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  text-underline-offset: 0.2em;
+}
+.camera-controls button:hover { text-decoration: underline; }
+.camera-controls button[aria-disabled='true'] { color: var(--soft-ink); cursor: default; }
+.camera-announcement { min-width: 8rem; text-align: center; }
+
+@media (max-width: 35rem) {
+  .camera-controls { inset-inline: 0.5rem; max-width: none; justify-content: space-between; gap: 0.2rem; font-size: 0.78rem; }
+  .camera-announcement { min-width: 0; }
+}

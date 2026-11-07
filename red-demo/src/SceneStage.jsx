@@ -17,10 +17,35 @@ export default function SceneStage({ chapters, main }) {
     const layout = new ResizeObserver(schedule)
     const animation = { frame: 0 }
     let ready = false
+    let camera = null
 
     function draw() {
       animation.frame = 0
-      if (motion.matches) return
+      if (motion.matches || camera?.motionOff) {
+        delete mainNode.dataset.sceneMotion
+        headers.forEach(header => header.style.setProperty('--copy-opacity', '1'))
+        return
+      }
+      if (camera && mainNode.hasAttribute('data-spatial')) {
+        const incoming = Math.ceil(camera.position)
+        const mix = ease(camera.position - Math.floor(camera.position))
+        layers.forEach((layer, index) => {
+          const opacity = index === Math.floor(camera.position) ? 1 : index === incoming ? mix : 0
+          layer.style.opacity = String(opacity)
+          if (opacity > 0) {
+            const panel = headers[index].parentElement
+            const travel = clamp(0.5 + panel.scrollTop / mainNode.clientHeight * 0.4)
+            layer.style.transform = `scale(${1.025 + travel * 0.055})`
+          }
+        })
+        headers.forEach((header, index) => {
+          const remaining = clamp((header.offsetHeight - header.parentElement.scrollTop) / (mainNode.clientHeight * 0.32))
+          const readable = Math.min(remaining, 1 - clamp(Math.abs(camera.position - index)))
+          header.style.setProperty('--copy-opacity', String(0.55 + 0.45 * ease(readable)))
+        })
+        mainNode.dataset.sceneMotion = ''
+        return
+      }
       const height = window.innerHeight
       const bounds = headers.map(header => header.getBoundingClientRect())
       const incoming = Math.max(0, bounds.findLastIndex(({ top }) => top < height * 0.9))
@@ -45,7 +70,7 @@ export default function SceneStage({ chapters, main }) {
     }
 
     function schedule() {
-      if (ready && !motion.matches && !animation.frame) animation.frame = requestAnimationFrame(draw)
+      if (ready && !animation.frame) animation.frame = requestAnimationFrame(draw)
     }
 
     function syncMotion() {
@@ -56,10 +81,14 @@ export default function SceneStage({ chapters, main }) {
       schedule()
     }
 
+    mainNode.addEventListener('camera-frame', event => {
+      camera = event.detail
+      schedule()
+    }, { signal })
     window.addEventListener('scroll', schedule, { passive: true, signal })
     window.addEventListener('resize', schedule, { signal })
     motion.addEventListener('change', syncMotion, { signal })
-    for (const section of mainNode.children) layout.observe(section)
+    for (const header of headers) layout.observe(header)
 
     Promise.all(layers.map(layer => layer.decode())).then(() => {
       if (signal.aborted) return

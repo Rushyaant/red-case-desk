@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import SceneStage from './SceneStage.jsx'
+import CameraNavigation from './CameraNavigation.jsx'
 import Evidence from './Evidence.jsx'
 import QrLab from './QrLab.jsx'
 import CaseReport from './CaseReport.jsx'
@@ -163,13 +164,6 @@ export default function App() {
   const [observations, setObservations] = useState(null)
   const [scan, setScan] = useState(null)
 
-  useEffect(() => {
-    // React mounts the chapter targets after the browser's initial fragment lookup.
-    if (window.scrollY === 0 && window.location.hash) {
-      document.getElementById(window.location.hash.slice(1))?.scrollIntoView()
-    }
-  }, [])
-
   const desks = {
     intake: <Intake />,
     lookalikes: <Lookalikes selected={selected} setSelected={setSelected} report={variants} setReport={setVariants} />,
@@ -188,25 +182,28 @@ export default function App() {
         ))}</div>
       </nav>
       <main ref={main}>
-        {chapters.map(({ id, label, title, location, description, image, position, align, dark }, index) => {
-          const Heading = index === 0 ? 'h1' : 'h2'
-          return (
-            <section key={id} id={id} aria-labelledby={`${id}-title`}>
-              <header className="scene" data-align={align} data-dark={dark}
-                style={{ '--scene-image': `url("${image}")`, '--scene-position': position }}>
-                <div className="scene-copy">
-                  <Heading id={`${id}-title`}>{title ?? label}</Heading>
-                  <p>{description}</p>
-                  {index === 0 && <span className="stamp">{trainingMode ? 'Hosted training' : 'Simulation'}</span>}
-                </div>
-                <span className="scene-location">{location}</span>
-              </header>
-              <div className="chapter-body">{desks[id]}</div>
-            </section>
-          )
-        })}
+        <div className="camera-world">
+          {chapters.map(({ id, label, title, location, description, image, position, align, dark }, index) => {
+            const Heading = index === 0 ? 'h1' : 'h2'
+            return (
+              <section key={id} id={id} aria-labelledby={`${id}-title`}>
+                <header className="scene" data-align={align} data-dark={dark}
+                  style={{ '--scene-image': `url("${image}")`, '--scene-position': position }}>
+                  <div className="scene-copy">
+                    <Heading id={`${id}-title`}>{title ?? label}</Heading>
+                    <p>{description}</p>
+                    {index === 0 && <span className="stamp">{trainingMode ? 'Hosted training' : 'Simulation'}</span>}
+                  </div>
+                  <span className="scene-location">{location}</span>
+                </header>
+                <div className="chapter-body">{desks[id]}</div>
+              </section>
+            )
+          })}
+        </div>
       </main>
       <SceneStage chapters={chapters} main={main} />
+      <CameraNavigation chapters={chapters} main={main} />
     </>
   )
 }
