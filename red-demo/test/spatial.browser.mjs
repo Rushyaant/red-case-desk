@@ -181,7 +181,7 @@ try {
     assert.equal(content.evidence.length, 1)
     assert.equal(content.qr.result, 'review')
     for (const [from, to] of [['case-report', 'qr-lab'], ['qr-lab', 'evidence'], ['evidence', 'lookalikes']]) {
-      await page.getByRole('button', { name: 'Previous chapter' }).click()
+      await page.getByRole('button', { name: 'Back to previous chapter' }).click()
       await settled(page, to)
       assert.equal(await page.locator('#' + to + ' .chapter-body').evaluate(el => el.scrollTop), 0, from)
     }
@@ -225,6 +225,96 @@ try {
     assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), 'solid')
     await context.close()
   })
+
+
+  await test('keyboard skip link, native endpoints, touch targets, and phone input sizing', async () => {
+    const { context, page } = await open({ viewport: { width: 390, height: 844 } })
+    assert.equal(await page.getByRole('button', { name: 'Back to previous chapter' }).isDisabled(), true)
+    await page.keyboard.press('Tab')
+    assert.equal(await page.locator('.skip-link').evaluate(el => el === document.activeElement), true)
+    await page.keyboard.press('Enter')
+    await settled(page, 'intake')
+    assert.equal(await page.locator('#intake-title').evaluate(el => el === document.activeElement), true)
+    for (const link of await page.locator('.chapter-nav a').all()) {
+      assert.ok((await link.boundingBox()).height >= 44)
+    }
+    await go(page, 'lookalikes')
+    assert.ok(await page.getByLabel('Domain', { exact: true }).evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 16))
+    assert.equal(await page.title(), 'Lookalikes · Red Case Desk')
+    await go(page, 'case-report')
+    assert.equal(await page.getByRole('button', { name: 'Forward to next chapter' }).isDisabled(), true)
+    await context.close()
+  })
+
+  await test('200 percent text remains readable and forms remain reachable', async () => {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const { context, page } = await open({ viewport })
+      await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
+      for (const id of chapters) {
+        await go(page, id)
+        const bounds = await page.locator('#' + id + ' .chapter-body').boundingBox()
+        assert.ok(bounds.height >= 80, id + ' ' + JSON.stringify(viewport) + ' ' + JSON.stringify(bounds))
+        const control = page.locator('#' + id + ' .chapter-body').locator('a,button,input,select').filter({ visible: true }).first()
+        if (await control.count()) {
+          await control.scrollIntoViewIfNeeded()
+          const box = await control.boundingBox()
+          const safe = await page.locator('main').boundingBox()
+          assert.ok(box.y >= safe.y - 1 && box.y + box.height <= safe.y + safe.height + 1, id + ' control clipped')
+        }
+      }
+      await go(page, 'lookalikes')
+      await page.getByRole('button', { name: 'Generate variants', exact: true }).click()
+      await page.getByRole('checkbox', { name: /^Select / }).first().check()
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
+      await context.close()
+    }
+  })
+
+  await test('automated accessibility audit across all five chapters', async () => {
+    const { default: AxeBuilder } = await import(process.env.AXE_MODULE ?? '@axe-core/playwright')
+    const { context, page } = await open()
+    const audit = []
+    for (const id of chapters) {
+      await go(page, id)
+      const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
+      audit.push({ chapter: id, violations: result.violations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.map(n => n.target) })), incomplete: result.incomplete.map(v => v.id) })
+    }
+    await writeFile(resolve(output, 'accessibility.json'), JSON.stringify(audit, null, 2))
+    assert.ok(audit.every(row => row.violations.length === 0), JSON.stringify(audit))
+    await context.close()
+  })
+
+  await test('camera stops rendering at rest and reverses travel without losing its destination', async () => {
+    const { context, page } = await open()
+    await page.evaluate(() => { window.cameraFrames = 0; document.querySelector('main').addEventListener('camera-frame', () => window.cameraFrames++) })
+    await page.evaluate(() => new Promise(resolve => {
+      const start = performance.now()
+      const sample = time => time - start >= 250 ? resolve() : requestAnimationFrame(sample)
+      requestAnimationFrame(sample)
+    }))
+    assert.equal(await page.evaluate(() => window.cameraFrames), 0)
+    assert.ok(await page.locator('.scene-stage img').evaluateAll(layers => layers.every(el => getComputedStyle(el).willChange === 'auto')))
+    await page.getByRole('button', { name: 'Forward to next chapter' }).click()
+    await page.waitForFunction(() => document.querySelector('main').hasAttribute('data-moving'))
+    await page.getByRole('button', { name: 'Back to previous chapter' }).click()
+    await settled(page, 'intake')
+    assert.equal(await page.evaluate(() => scrollY), 0)
+    await context.close()
+  })
+
+  await test('failed training-data requests show an error and allow retry', async () => {
+    const { context, page } = await open()
+    await go(page, 'lookalikes')
+    await page.route('**/demo-cases.json', route => route.fulfill({ status: 503, json: { error: 'Training data unavailable. Try again.' } }))
+    await page.getByRole('button', { name: 'Generate variants', exact: true }).click()
+    await page.getByRole('alert').waitFor()
+    assert.equal(await page.getByRole('button', { name: 'Generate variants', exact: true }).isEnabled(), true)
+    await page.unroute('**/demo-cases.json')
+    await page.getByRole('button', { name: 'Generate variants', exact: true }).click()
+    await page.getByRole('checkbox', { name: /^Select / }).first().waitFor()
+    await context.close()
+  })
+
 
   await test('no browser JavaScript exceptions', () => assert.deepEqual(errors, []))
 } finally {

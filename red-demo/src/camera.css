@@ -49,7 +49,7 @@ main[data-moving] .chapter::before { opacity: 0; }
   text-underline-offset: 0.2em;
 }
 .camera-controls button:hover { text-decoration: underline; }
-.camera-controls button[aria-disabled='true'] { color: var(--soft-ink); cursor: default; }
+.camera-controls button:disabled { color: var(--soft-ink); cursor: default; }
 .camera-announcement { min-width: 8rem; text-align: center; font-variant-numeric: tabular-nums; }
 @media (max-width: 52.99rem) { .camera-hint { display: none; } }
 @media (max-width: 35rem) {

@@ -14,7 +14,9 @@ function savedPreference() {
 }
 
 function scrollableBody(element) {
-  const body = element.closest('.chapter-body')
+  const panel = element.closest('.chapter')
+  const body = panel?.hasAttribute('data-overflow')
+    ? element.closest('.chapter-copy') : element.closest('.chapter-body')
   return body && body.scrollHeight > body.clientHeight + 1
 }
 
@@ -70,14 +72,19 @@ export default function CameraNavigation({ chapters, main }) {
       })
       paint()
       const panel = panels[state.target]
+      document.title = `${chapters[state.target].title ?? chapters[state.target].label} · Red Case Desk`
+      document.querySelector('.skip-link').href = '#' + panel.id
+      navigation.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
       const body = panel.querySelector('.chapter-body')
       // Every route, including Back/Forward, lands at the chapter opening.
       panel.scrollTop = 0
+      panel.querySelector('.chapter-copy').scrollTop = 0
       body.scrollTop = 0
       if (state.fragment) {
         const element = document.getElementById(state.fragment)
         if (element && body.contains(element)) {
-          body.scrollTop = Math.max(0, element.getBoundingClientRect().top - body.getBoundingClientRect().top)
+          const scroller = panel.hasAttribute('data-overflow') ? panel.querySelector('.chapter-copy') : body
+          scroller.scrollTop = Math.max(0, element.getBoundingClientRect().top - scroller.getBoundingClientRect().top)
         }
       }
       if (state.focus) panel.querySelector('h1, h2').focus({ preventScroll: true })
@@ -149,6 +156,8 @@ export default function CameraNavigation({ chapters, main }) {
     function resize() {
       root.style.setProperty('--navigation-height', `${navigation.getBoundingClientRect().height}px`)
       root.style.setProperty('--controls-height', `${document.querySelector('.camera-controls').getBoundingClientRect().height}px`)
+      panels.forEach(panel => panel.toggleAttribute('data-overflow',
+        panel.querySelector('.scene').scrollHeight > root.clientHeight * 0.6))
       paint()
     }
 
@@ -239,6 +248,7 @@ export default function CameraNavigation({ chapters, main }) {
     const layout = new ResizeObserver(resize)
     layout.observe(navigation)
     layout.observe(document.querySelector('.camera-controls'))
+    panels.forEach(panel => layout.observe(panel.querySelector('.scene')))
     window.addEventListener('resize', resize, { signal })
     const initialId = fragmentId(location.hash)
     const initialElement = document.getElementById(initialId)
@@ -260,6 +270,7 @@ export default function CameraNavigation({ chapters, main }) {
       panels.forEach(panel => {
         panel.inert = false
         panel.removeAttribute('aria-hidden')
+        panel.removeAttribute('data-overflow')
         for (const property of ['transform', 'visibility', 'opacity']) panel.style.removeProperty(property)
       })
     }
@@ -273,12 +284,12 @@ export default function CameraNavigation({ chapters, main }) {
   return (
     <div className="camera-controls" role="group" aria-label="Camera navigation">
       <span className="camera-hint">Scroll the artwork to travel</span>
-      <button type="button" aria-label="Previous chapter" aria-disabled={current === 0 && !moving}
+      <button type="button" aria-label="Back to previous chapter" disabled={current === 0 && !moving}
         onClick={() => controls.current?.step(-1)}>Back</button>
       <span className="camera-announcement" role="status" aria-live="polite" aria-atomic="true">
         {moving ? 'Traveling…' : `${current + 1} of ${chapters.length} · ${chapters[current].label}`}
       </span>
-      <button type="button" aria-label="Next chapter" aria-disabled={current === chapters.length - 1 && !moving}
+      <button type="button" aria-label="Forward to next chapter" disabled={current === chapters.length - 1 && !moving}
         onClick={() => controls.current?.step(1)}>Forward</button>
       <button type="button" aria-pressed={motionOff} onClick={() => setMotionOff(!motionOff)}>
         {systemReduced ? 'Motion off (system)' : motionOff ? 'Motion off' : 'Motion on'}

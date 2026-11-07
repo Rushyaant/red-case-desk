@@ -18,7 +18,10 @@ export default function SceneStage({ chapters, main }) {
       const left = Math.floor(camera.position)
       const mix = ease(clamp(camera.position - left))
       layers.forEach((layer, index) => {
-        layer.style.opacity = String(index === left ? 1 : index === left + 1 ? mix : 0)
+        const opacity = index === left ? 1 : index === left + 1 ? mix : 0
+        layer.style.opacity = String(opacity)
+        layer.style.willChange = opacity > 0 && camera.moving && !camera.motionOff ? 'transform, opacity' : 'auto'
+        if (!opacity) return
         // Only the full-bleed artwork travels in depth; controls never become 3D cards.
         const distance = camera.position - index
         layer.style.transform = camera.motionOff ? 'none'

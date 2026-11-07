@@ -175,6 +175,7 @@ export default function App() {
 
   return (
     <>
+      <a className="skip-link" href="#intake">Skip to current chapter</a>
       <nav className="chapter-nav" aria-label="Chapters">
         <span>Red Case Desk</span>
         <div>{chapters.map(({ id, label }, index) => (
