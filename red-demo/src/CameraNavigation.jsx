@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { advanceCamera, cameraDepth, clamp, createWheelGesture } from './cameraMotion.js'
+import { advanceCamera, clamp, createWheelGesture } from './cameraMotion.js'
 import './camera.css'
 
 const preferenceKey = 'red-case-desk-motion-off'
 const interactive = 'input, textarea, select, button, [contenteditable]:not([contenteditable="false"]), [role="slider"], [role="listbox"], [role="menu"]'
-const ease = value => value * value * (3 - 2 * value)
 
 function fragmentId(hash) {
   try { return decodeURIComponent(hash.slice(1)) } catch { return hash.slice(1) }
@@ -14,16 +13,11 @@ function savedPreference() {
   try { return localStorage.getItem(preferenceKey) === 'true' } catch { return false }
 }
 
-function canScroll(element, panel, direction) {
-  for (let node = element; node && panel.contains(node); node = node.parentElement) {
-    const overflow = getComputedStyle(node).overflowY
-    if (/(auto|scroll)/.test(overflow) && node.scrollHeight > node.clientHeight + 1) {
-      if (direction > 0 && node.scrollTop + node.clientHeight < node.scrollHeight - 2) return true
-      if (direction < 0 && node.scrollTop > 2) return true
-    }
-    if (node === panel) break
-  }
-  return false
+function scrollableBody(element) {
+  const panel = element.closest('.chapter')
+  const body = panel?.hasAttribute('data-overflow')
+    ? element.closest('.chapter-copy') : element.closest('.chapter-body')
+  return body && body.scrollHeight > body.clientHeight + 1
 }
 
 export default function CameraNavigation({ chapters, main }) {
@@ -57,19 +51,8 @@ export default function CameraNavigation({ chapters, main }) {
     }
 
     function paint() {
-      const width = root.clientWidth
-      // Chapter planes share one perspective space. The camera returns to neutral at every stop.
-      const stops = [0, 0.16, -0.12, 0.14, 0]
-      const left = Math.floor(state.position)
-      const mix = state.position - left
-      const cameraX = ((stops[left] ?? 0) * (1 - mix) + (stops[left + 1] ?? 0) * mix) * width
-      world.style.transform = instant() ? 'none' : `translate3d(${-cameraX}px, 0, ${state.position * cameraDepth}px)`
       panels.forEach((panel, index) => {
-        const behind = state.position - index
-        const visible = state.moving ? Math.abs(behind) < 1.05 : index === state.target
-        panel.style.transform = instant() ? 'none' : `translate3d(${(stops[index] ?? 0) * width}px, 0, ${-index * cameraDepth}px)`
-        panel.style.visibility = visible ? 'visible' : 'hidden'
-        panel.style.opacity = instant() ? '1' : String(behind > 0 ? 1 - ease(clamp(behind / 0.72, 0, 1)) : 1)
+        panel.style.visibility = index === state.target ? 'visible' : 'hidden'
         panel.inert = state.moving || index !== state.target
         panel.setAttribute('aria-hidden', String(panel.inert))
       })
@@ -89,10 +72,20 @@ export default function CameraNavigation({ chapters, main }) {
       })
       paint()
       const panel = panels[state.target]
+      document.title = `${chapters[state.target].title ?? chapters[state.target].label} · Red Case Desk`
+      document.querySelector('.skip-link').href = '#' + panel.id
+      navigation.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      const body = panel.querySelector('.chapter-body')
+      // Every route, including Back/Forward, lands at the chapter opening.
+      panel.scrollTop = 0
+      panel.querySelector('.chapter-copy').scrollTop = 0
+      body.scrollTop = 0
       if (state.fragment) {
         const element = document.getElementById(state.fragment)
-        panel.scrollTop = element === panel ? 0
-          : panel.scrollTop + element.getBoundingClientRect().top - panel.getBoundingClientRect().top
+        if (element && body.contains(element)) {
+          const scroller = panel.hasAttribute('data-overflow') ? panel.querySelector('.chapter-copy') : body
+          scroller.scrollTop = Math.max(0, element.getBoundingClientRect().top - scroller.getBoundingClientRect().top)
+        }
       }
       if (state.focus) panel.querySelector('h1, h2').focus({ preventScroll: true })
       state.fragment = null
@@ -162,6 +155,9 @@ export default function CameraNavigation({ chapters, main }) {
 
     function resize() {
       root.style.setProperty('--navigation-height', `${navigation.getBoundingClientRect().height}px`)
+      root.style.setProperty('--controls-height', `${document.querySelector('.camera-controls').getBoundingClientRect().height}px`)
+      panels.forEach(panel => panel.toggleAttribute('data-overflow',
+        panel.querySelector('.scene').scrollHeight > root.clientHeight * 0.6))
       paint()
     }
 
@@ -182,7 +178,6 @@ export default function CameraNavigation({ chapters, main }) {
     panels.forEach(panel => {
       const heading = panel.querySelector('h1, h2')
       heading.tabIndex = -1
-      panel.addEventListener('scroll', emit, { passive: true, signal })
     })
 
     document.addEventListener('click', event => {
@@ -203,8 +198,7 @@ export default function CameraNavigation({ chapters, main }) {
       if (event.target.closest(interactive)) return
       const direction = Math.sign(event.deltaY)
       if (!direction) return
-      const panel = panels[state.target]
-      const scrollable = !state.moving && canScroll(event.target, panel, direction)
+      const scrollable = !state.moving && scrollableBody(event.target)
       const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? root.clientHeight : 1)
       const intent = gesture.feed(delta, performance.now(), scrollable)
       if (scrollable) return
@@ -219,13 +213,7 @@ export default function CameraNavigation({ chapters, main }) {
       if (!direction || event.repeat) return
       // Space on links retains activation semantics.
       if (event.key === ' ' && event.target.closest('a')) return
-      const panel = panels[state.target]
-      if (!['ArrowLeft', 'ArrowRight'].includes(event.key) && !state.moving && canScroll(panel, panel, direction)) {
-        if (canScroll(event.target, panel, direction)) return
-        event.preventDefault()
-        panel.scrollBy({ top: direction * (event.key.startsWith('Arrow') ? 60 : panel.clientHeight * 0.85) })
-        return
-      }
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key) && !state.moving && scrollableBody(event.target)) return
       event.preventDefault()
       step(direction)
     }, { signal })
@@ -241,7 +229,7 @@ export default function CameraNavigation({ chapters, main }) {
       const x = touch.x - event.touches[0].clientX
       const y = touch.y - event.touches[0].clientY
       if (Math.abs(x) > Math.abs(y) || Math.abs(y) < 8) return
-      if (!state.moving && canScroll(event.target, panels[state.target], Math.sign(y))) {
+      if (!state.moving && scrollableBody(event.target)) {
         touch.used = true
         return
       }
@@ -252,12 +240,15 @@ export default function CameraNavigation({ chapters, main }) {
       }
     }, { passive: false, signal })
     root.addEventListener('touchend', () => { state.touch = null }, { passive: true, signal })
+    root.addEventListener('touchcancel', () => { state.touch = null }, { passive: true, signal })
     root.addEventListener('camera-motion', syncMotion, { signal })
     window.addEventListener('popstate', fromHash, { signal })
     window.addEventListener('hashchange', fromHash, { signal })
     media.addEventListener('change', syncMotion, { signal })
     const layout = new ResizeObserver(resize)
     layout.observe(navigation)
+    layout.observe(document.querySelector('.camera-controls'))
+    panels.forEach(panel => layout.observe(panel.querySelector('.scene')))
     window.addEventListener('resize', resize, { signal })
     const initialId = fragmentId(location.hash)
     const initialElement = document.getElementById(initialId)
@@ -279,6 +270,7 @@ export default function CameraNavigation({ chapters, main }) {
       panels.forEach(panel => {
         panel.inert = false
         panel.removeAttribute('aria-hidden')
+        panel.removeAttribute('data-overflow')
         for (const property of ['transform', 'visibility', 'opacity']) panel.style.removeProperty(property)
       })
     }
@@ -291,12 +283,13 @@ export default function CameraNavigation({ chapters, main }) {
 
   return (
     <div className="camera-controls" role="group" aria-label="Camera navigation">
-      <button type="button" aria-label="Previous chapter" aria-disabled={current === 0 && !moving}
+      <span className="camera-hint">Scroll the artwork to travel</span>
+      <button type="button" aria-label="Back to previous chapter" disabled={current === 0 && !moving}
         onClick={() => controls.current?.step(-1)}>Back</button>
       <span className="camera-announcement" role="status" aria-live="polite" aria-atomic="true">
         {moving ? 'Traveling…' : `${current + 1} of ${chapters.length} · ${chapters[current].label}`}
       </span>
-      <button type="button" aria-label="Next chapter" aria-disabled={current === chapters.length - 1 && !moving}
+      <button type="button" aria-label="Forward to next chapter" disabled={current === chapters.length - 1 && !moving}
         onClick={() => controls.current?.step(1)}>Forward</button>
       <button type="button" aria-pressed={motionOff} onClick={() => setMotionOff(!motionOff)}>
         {systemReduced ? 'Motion off (system)' : motionOff ? 'Motion off' : 'Motion on'}

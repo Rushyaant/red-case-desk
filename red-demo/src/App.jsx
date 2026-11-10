@@ -175,6 +175,7 @@ export default function App() {
 
   return (
     <>
+      <a className="skip-link" href="#intake">Skip to current chapter</a>
       <nav className="chapter-nav" aria-label="Chapters">
         <span>Red Case Desk</span>
         <div>{chapters.map(({ id, label }, index) => (
@@ -186,9 +187,11 @@ export default function App() {
           {chapters.map(({ id, label, title, location, description, image, position, align, dark }, index) => {
             const Heading = index === 0 ? 'h1' : 'h2'
             return (
-              <section key={id} id={id} aria-labelledby={`${id}-title`}>
-                <header className="scene" data-align={align} data-dark={dark}
-                  style={{ '--scene-image': `url("${image}")`, '--scene-position': position }}>
+              <section key={id} id={id} className="chapter" aria-labelledby={`${id}-title`}
+                data-align={align} data-dark={dark}
+                style={{ '--scene-image': `url("${image}")`, '--scene-position': position }}>
+                <div className="chapter-copy">
+                <header className="scene">
                   <div className="scene-copy">
                     <Heading id={`${id}-title`}>{title ?? label}</Heading>
                     <p>{description}</p>
@@ -197,6 +200,7 @@ export default function App() {
                   <span className="scene-location">{location}</span>
                 </header>
                 <div className="chapter-body">{desks[id]}</div>
+                </div>
               </section>
             )
           })}

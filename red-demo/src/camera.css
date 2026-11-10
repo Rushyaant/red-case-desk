@@ -1,54 +1,47 @@
 .spatial-document,
-.spatial-document body { overflow: hidden; }
+.spatial-document body { height: 100%; overflow: hidden; }
 
-main[data-spatial] {
+main {
   position: fixed;
-  top: var(--navigation-height, 3.5rem);
+  top: var(--navigation-height, 5rem);
   right: 0;
-  bottom: 0;
+  bottom: var(--controls-height, 4rem);
   left: 0;
-  perspective: 1100px;
-  perspective-origin: 50% 45%;
-  overflow: clip;
+  overflow: hidden;
 }
-
-.camera-world { transform-style: preserve-3d; }
-main[data-spatial] .camera-world { width: 100%; height: 100%; }
-main[data-spatial] .camera-world > section {
+.camera-world { width: 100%; height: 100%; }
+.camera-world > .chapter {
   position: absolute;
   inset: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overflow: hidden;
+  visibility: hidden;
   touch-action: pan-y pinch-zoom;
-  scrollbar-gutter: stable;
-  padding-bottom: 3.5rem;
 }
-main[data-spatial][data-moving] .camera-world { will-change: transform; }
-main[data-spatial][data-instant] { perspective: none; }
-main[data-spatial][data-instant] .camera-world { transform-style: flat; }
-main[data-spatial] .scene-copy { opacity: var(--copy-opacity, 1); }
-main[data-spatial] h1:focus, main[data-spatial] h2:focus { outline-offset: 8px; }
+.camera-world > .chapter:first-child { visibility: visible; }
+main[data-moving] .chapter-copy { opacity: 0; visibility: hidden; transition: none; }
+main[data-moving] .chapter::before { opacity: 0; }
+.chapter h1:focus, .chapter h2:focus { outline: none; }
 
 .camera-controls {
   position: fixed;
   z-index: 3;
-  inset-inline-end: 1rem;
-  bottom: max(0.65rem, env(safe-area-inset-bottom));
+  inset-inline: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 0.35rem 0.8rem;
-  max-width: calc(100% - 2rem);
-  padding: 0.3rem 0.6rem;
-  border: 1px solid var(--rule);
+  gap: 0.35rem 1rem;
+  padding: 0.5rem clamp(1rem, 4vw, 4.5rem) max(0.5rem, env(safe-area-inset-bottom));
   background: var(--paper);
   color: var(--ink);
   font-size: 0.85rem;
 }
+.camera-hint { margin-inline-end: auto; color: var(--soft-ink); }
 .camera-controls button {
-  min-height: 2.5rem;
-  padding: 0.2rem 0.3rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.3rem;
   border: 0;
   background: transparent;
   color: var(--red);
@@ -56,10 +49,10 @@ main[data-spatial] h1:focus, main[data-spatial] h2:focus { outline-offset: 8px; 
   text-underline-offset: 0.2em;
 }
 .camera-controls button:hover { text-decoration: underline; }
-.camera-controls button[aria-disabled='true'] { color: var(--soft-ink); cursor: default; }
-.camera-announcement { min-width: 8rem; text-align: center; }
-
+.camera-controls button:disabled { color: var(--soft-ink); cursor: default; }
+.camera-announcement { min-width: 8rem; text-align: center; font-variant-numeric: tabular-nums; }
+@media (max-width: 52.99rem) { .camera-hint { display: none; } }
 @media (max-width: 35rem) {
-  .camera-controls { inset-inline: 0.5rem; max-width: none; justify-content: space-between; gap: 0.2rem; font-size: 0.78rem; }
+  .camera-controls { justify-content: space-between; gap: 0.2rem; padding-inline: 0.75rem; font-size: 0.78rem; }
   .camera-announcement { min-width: 0; }
 }
