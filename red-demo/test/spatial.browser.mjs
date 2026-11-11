@@ -4,11 +4,14 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises'
 import { resolve, extname } from 'node:path'
 import test from 'node:test'
 
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright')
+const playwright = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright')
+const browserName = process.env.PLAYWRIGHT_BROWSER ?? 'chromium'
+const browserType = playwright[browserName]
+assert.ok(browserType, `Unsupported Playwright browser: ${browserName}`)
 const publicRoot = resolve('dist')
 const output = resolve('output/playwright')
 await mkdir(output, { recursive: true })
-const server = createServer(async (request, response) => {
+const server = process.env.TEST_ORIGIN ? null : createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname)
     const file = resolve(publicRoot, '.' + (pathname === '/' ? '/index.html' : pathname))
@@ -22,9 +25,9 @@ const server = createServer(async (request, response) => {
     response.end()
   }
 })
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
-const origin = `http://127.0.0.1:${server.address().port}`
-const browser = await chromium.launch({ headless: true })
+if (server) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+const origin = process.env.TEST_ORIGIN ?? `http://127.0.0.1:${server.address().port}`
+const browser = await browserType.launch({ headless: true })
 const chapters = ['intake', 'lookalikes', 'evidence', 'qr-lab', 'case-report']
 const errors = []
 const measurements = []
@@ -212,7 +215,8 @@ try {
     await context.close()
   })
 
-  await test('mobile touch navigates and keyboard focus remains visible on controls', async () => {
+  await test('mobile touch navigates and keyboard focus remains visible on controls',
+    { skip: browserName !== 'chromium' }, async () => {
     const { context, page } = await open({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
     const session = await context.newCDPSession(page)
     const top = await page.locator('main').evaluate(el => el.getBoundingClientRect().top)
@@ -320,6 +324,6 @@ try {
 } finally {
   await writeFile(resolve(output, 'layout-measurements.json'), JSON.stringify(measurements, null, 2))
   await browser.close()
-  await new Promise(resolve => server.close(resolve))
+  if (server) await new Promise(resolve => server.close(resolve))
 }
 

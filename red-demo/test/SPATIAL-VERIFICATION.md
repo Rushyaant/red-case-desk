@@ -12,6 +12,11 @@ npm run build -- --mode training
 node test/spatial.browser.mjs
 ```
 
+Set `TEST_ORIGIN=https://red-case-desk.vercel.app` to run against production, or
+`PLAYWRIGHT_BROWSER=webkit` to repeat the cross-browser checks in WebKit. The
+low-level synthetic touch gesture is Chromium-only; the remaining checks run in
+both engines.
+
 The test serves the actual production build and recorded training fixtures over a local HTTP server. It does not mock the navigation, forms, generator, evidence, QR training results, or export code. Playwright is a test-only runtime and is not added to application dependencies.
 
 Coverage: all five chapters at 1440×900, 390×844, 1024×600 and 320×640; navigation/footer clearance; page overflow; transparent content surfaces; inactive chapters and focus; forward/back depth frames; wheel and keyboard navigation; touch navigation; scrolling boundaries; form and selection persistence; history; motion preferences; training evidence; QR sample results; JSON export; browser exceptions.
